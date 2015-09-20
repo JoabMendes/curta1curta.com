@@ -1,9 +1,12 @@
 <?php
 
+
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Http\Request;
 use App\User;
 use Validator;
+use Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Foundation\Auth\AuthenticatesAndRegistersUsers;
@@ -22,6 +25,9 @@ class AuthController extends Controller
     */
 
     use AuthenticatesAndRegistersUsers, ThrottlesLogins;
+
+    // Redirect the user to the following route
+    protected $redirectTo = '/admin';
 
     /**
      * Create a new authentication controller instance.
@@ -62,4 +68,27 @@ class AuthController extends Controller
             'password' => bcrypt($data['password']),
         ]);
     }
+
+    public function postLogin(Request $request){
+        $this->validate($request, [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt(['email' => $request['email'], 'password' => $request['password']])){
+            return redirect()->intended($this->redirectPath());
+        }else{
+            return redirect($this->loginPath())->withInput($request->only('email'))
+            ->withErrors([
+                'email' => $this->getFailedLoginMessage(),
+            ]);
+        }
+    }
+
+    public function getLogout() {
+        Auth::logout();
+        return redirect()->intended($this->redirectPath());
+    }
+
+
 }
